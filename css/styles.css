@@ -1,0 +1,9 @@
+h1 {
+  text-align: center;
+}
+
+.tables {
+  text-align: center;
+  display: inline-block;
+  width: 49%;
+}

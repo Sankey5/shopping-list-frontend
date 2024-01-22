@@ -1,1 +1,1 @@
-# shopping-list-frontend
+# Shopping List Frontend
