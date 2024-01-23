@@ -1,45 +1,32 @@
 const ADD_MEAL_BTN = document.getElementById('meal-button');
+const INGREDIENT_INPUT = 'ingredientInput-';
 
-
-// function createMeal() {
-//   let mealTable = document.querySelectorAll('#meals-table>table>tbody>tr');
-
-//   // Get the number of the last meal
-//   const lastMealText = mealTable[mealTable.length - 1].querySelector('td').textContent;
-//   const lastMealNum = lastMealText[lastMealText.length - 1];
-
-//   // Create the new elements
-//   let newRow = document.createElement('tr');
-//   let newData = document.createElement('td');
-  
-//   // Append them together
-//   newData.appendChild(document.createTextNode('Meal ' + (+lastMealNum + 1)));
-//   newRow.appendChild(newData);
-  
-//   // Add it to the list
-//   mealTable[0].parentNode.append(newRow);
-// }
-
-function addIngredientInput() {
+function addIngredientInput(inputIdNum) {
   const FOR_INGREDIENT_NAME = 'ingredientName';
   const FOR_INGREDIENT_NUMBER = 'ingredientNumber';
   const FOR_INGREDIENT_MEASUREMENT = 'ingredientMeasurement';
 
   // Create the main elements
   const labelIngredientName = Object.assign(document.createElement('label'), 
-                                {type: 'text', for: FOR_INGREDIENT_NAME, innerHTML: 'Ingredient Name: '});
+                                {for: FOR_INGREDIENT_NAME, innerHTML: 'Ingredient Name: '});
   const inputIngredientName = Object.assign(document.createElement('input'), 
-                                {name: FOR_INGREDIENT_NAME});
+                                {type: 'text', name: FOR_INGREDIENT_NAME});
 
   const labelIngredientNumber = Object.assign(document.createElement('label'), 
-                                {type: 'text', for: FOR_INGREDIENT_NUMBER, innerHTML: 'Amount: '});
+                                {for: FOR_INGREDIENT_NUMBER, innerHTML: 'Amount: '});
   const inputIngredientNumber = Object.assign(document.createElement('input'), 
-                                {name: FOR_INGREDIENT_NUMBER});
+                                {type: 'text', name: FOR_INGREDIENT_NUMBER});
 
   const labelIngredientMeasurement = Object.assign(document.createElement('label'), 
-                                {type: 'text', for: FOR_INGREDIENT_MEASUREMENT, innerHTML: 'Measurement: '});
-  const inputIngredientMeasurement = Object.assign(document.createElement('input'), 
-                                {name: FOR_INGREDIENT_MEASUREMENT});
+                                {for: FOR_INGREDIENT_MEASUREMENT, innerHTML: 'Measurement: '});
+  const inputIngredientMeasurement = Object.assign(document.createElement('select'), 
+                                {name: FOR_INGREDIENT_MEASUREMENT, size: '5'});
+
+
+  // Add the required attribute to the inputs
+  inputIngredientName.required = true;
+  inputIngredientNumber.required = true;
+  inputIngredientMeasurement.required = true;
 
   // Add options for the measurement
   let lbs = Object.assign(document.createElement('option'), {value:"lbs", innerHTML:"lbs"});
@@ -53,7 +40,7 @@ function addIngredientInput() {
   inputIngredientMeasurement.appendChild(tbps);
   inputIngredientMeasurement.appendChild(tsp);
 
-  // Add the two sections to a div
+  // Add the inputs to a span
   const nameSpan = document.createElement('span');
   const numSpan = document.createElement('span');
   const measSpan = document.createElement('span');
@@ -64,8 +51,9 @@ function addIngredientInput() {
   measSpan.appendChild(labelIngredientMeasurement);
   measSpan.appendChild(inputIngredientMeasurement);
 
-  // Add to div and return
+  // Add spans to div and return
   const retDiv = document.createElement('div');
+  retDiv.setAttribute('id', INGREDIENT_INPUT + inputIdNum);
   retDiv.appendChild(nameSpan);
   retDiv.appendChild(numSpan);
   retDiv.appendChild(measSpan);
@@ -74,27 +62,97 @@ function addIngredientInput() {
 
 function createMealForm() {
   // Create the form elements
-  const form = document.createElement('form');
-  form.setAttribute('id', 'ingredientInput');
-  form.appendChild(addIngredientInput());
+  const form = Object.assign(document.createElement('form'), {id: 'ingredientInput'});
+  // Prevent the form from submitting
+  form.onsubmit = (e) => {e.preventDefault();}
+
+  // Add the inputs of the name of the meal
+  let lableMealName = Object.assign(document.createElement('label'), {for: 'mealName', innerHTML: 'Meal name: '});
+  let inputMealName = Object.assign(document.createElement('input'), {id: 'mealName', name: 'mealName'});
+  inputMealName.required = true;
+
+  let divMealName = document.createElement('div');
+  divMealName.appendChild(lableMealName);
+  divMealName.appendChild(inputMealName);
+  form.appendChild(divMealName);
+
+  // Create all ingredient inputs
+  for(ingredientIndex = 0; ingredientIndex < 5; ingredientIndex++) {
+    form.appendChild(addIngredientInput(ingredientIndex));
+  }
   
-  // Create the button and add to form
-  let createMealBtn = document.createElement('button');
-  createMealBtn.appendChild(document.createTextNode('Create Meal'));
-  //createMealBtn.onclick();
+  // Create the button to create the meal and add to form
+  let createMealBtn = Object.assign(document.createElement('button'), {innerHTML: 'Create Meal', onclick: createNewMeal});
+  let deleteMealBtn = Object.assign(document.createElement('button'), {innerHTML: 'Delete Meal', onclick: deleteNewMealForm});
   form.appendChild(createMealBtn);
+  form.appendChild(deleteMealBtn);
 
   // Add the form to the bottom of the body
   document.body.append(form);
 }
 
-function deleteMealForm() {
-  return null;
+function deleteNewMealForm() {
+  //Delete the form which was created
+  document.getElementById('ingredientInput').remove();
+  // Re-add the button to be able to add another meal
+  ADD_MEAL_BTN.classList.remove('invisible');
+}
+
+function createMealJSONObject() {
+  let mealJSON = {};
+
+  let formHTMLInputList = document.querySelector('#ingredientInput');
+
+  // Set the name based on the first input value
+  mealJSON.mealName = formHTMLInputList.querySelector('#ingredientInput-0 input').value;
+
+  formHTMLInputList = formHTMLInputList.querySelectorAll('div');
+  mealJSON.ingredientsList = [];
+
+  for(divElem = 1; divElem<formHTMLInputList.length; divElem++) {
+    mealJSON.ingredientsList[divElem - 1] = {};
+
+    for(spanElem = 0; spanElem < 3; spanElem++) {
+      currElem = formHTMLInputList[divElem].childNodes[spanElem].childNodes[1];
+      let currElemName;
+
+      // if the option is selected, select option differently
+      if(currElem.localName == 'select') {
+        let currOption = currElem.options;
+        currElemName
+        //Select the option selected
+        mealJSON.ingredientsList[divElem - 1][currElem.name] = currOption[currOption.selectedIndex].value;
+      }
+      else if (currElem.localName == 'input') {
+        mealJSON.ingredientsList[divElem - 1][currElem.name] = currElem.value;
+      }
+    }
+  }
+
+  return mealJSON;
+}
+
+function createNewMeal() {
+  // Implement adding the ingredients the meals section and moving the ingredients to the database
+  // Gather meal details from form and store them locally in JSON object
+  let mealJSON = createMealJSONObject();
+  console.log(mealJSON);
+
+  // Make call to API with JSON object (probably need to serialize?)
+
+  // Validate the object is now in the database
+
+  // Move create new table item in the meals column (maybe don't include all  data?)
+  
+  // Delete the form
+  if(mealJSON)
+    deleteNewMealForm();
 }
 
 function addMeal() {
   // Create the form to add ingredients to a new meal
   createMealForm();
+  ADD_MEAL_BTN.classList.add('invisible');
 }
 
 // Add the functionality to the page
