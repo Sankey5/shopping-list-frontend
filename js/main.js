@@ -1,6 +1,8 @@
 const ADD_MEAL_BTN = document.getElementById('meal-button');
 const INGREDIENT_INPUT = 'ingredientInput-';
 
+// --------------- Meal Functions ---------------
+
 function addIngredientInput(inputIdNum) {
   const FOR_INGREDIENT_NAME = 'ingredientName';
   const FOR_INGREDIENT_NUMBER = 'ingredientNumber';
@@ -60,6 +62,25 @@ function addIngredientInput(inputIdNum) {
   return retDiv;
 }
 
+function addMoreIngredients(event) {
+  event.preventDefault();
+
+  let mealInputs = document.getElementById('mealInputs');
+  let ingredientsToAdd = parseInt(document.getElementById('extraIngredientNumber').value);
+  let currIngredients = document.getElementById('ingredientInput').querySelectorAll('div');
+  let lastIngredientIndex = +currIngredients[currIngredients.length - 1].id.split("-")[1];
+
+  if(ingredientsToAdd === null || ingredientsToAdd === NaN) {
+    console.error("Ingredient amount is not valid");
+    return false;
+  }
+
+  // Create all ingredient inputs
+  for(ingredientIndex = 0; ingredientIndex < ingredientsToAdd; ingredientIndex++) {
+    mealInputs.appendChild(addIngredientInput(ingredientIndex + lastIngredientIndex));
+  }
+}
+
 function createMealForm() {
   // Create the form elements
   const form = Object.assign(document.createElement('form'), {id: 'ingredientInput'});
@@ -75,17 +96,32 @@ function createMealForm() {
   divMealName.appendChild(labelMealName);
   divMealName.appendChild(inputMealName);
   form.appendChild(divMealName);
+  
+  let mealsDiv = Object.assign(document.createElement('div'), {id: "mealInputs"});
 
   // Create all ingredient inputs
-  for(ingredientIndex = 0; ingredientIndex < 5; ingredientIndex++) {
-    form.appendChild(addIngredientInput(ingredientIndex));
+  for(ingredientIndex = 0; ingredientIndex < 10; ingredientIndex++) {
+    mealsDiv.appendChild(addIngredientInput(ingredientIndex));
   }
+
+  form.appendChild(mealsDiv);
   
   // Create the button to create the meal and add to form
   let createMealBtn = Object.assign(document.createElement('button'), {innerHTML: 'Create Meal', onclick: createNewMeal});
   let deleteMealBtn = Object.assign(document.createElement('button'), {innerHTML: 'Delete Meal', onclick: deleteNewMealForm});
   form.appendChild(createMealBtn);
   form.appendChild(deleteMealBtn);
+
+  // Add the ingredient button and input
+  let addIngredientBtn = Object.assign(document.createElement('button'), {innerHTML: 'Add Ingredients', onclick: (e) => {addMoreIngredients(e)}});
+  let ingredientAmount = Object.assign(document.createElement('input'), {type: "number", id: 'extraIngredientNumber', name: 'mealName'});
+
+  let ingredientSpan = Object.assign(document.createElement('span'));
+
+  ingredientSpan.appendChild(ingredientAmount);
+  ingredientSpan.appendChild(addIngredientBtn);
+
+  form.appendChild(ingredientSpan);
 
   // Add the form to the bottom of the body
   document.body.append(form);
@@ -101,12 +137,12 @@ function deleteNewMealForm() {
 function createMealJSONObject() {
   let mealJSON = {};
 
-  let formHTMLInputList = document.querySelector('#ingredientInput');
+  let formHTMLInputList = document.getElementById('ingredientInput');
 
   // Set the name based on the first input value
   mealJSON.mealName = formHTMLInputList.querySelector('#ingredientInput input').value;
 
-  formHTMLInputList = formHTMLInputList.querySelectorAll('div');
+  formHTMLInputList = document.getElementById('mealInputs').querySelectorAll('div');
   mealJSON.ingredientsList = [];
 
   for(divElem = 1; divElem<formHTMLInputList.length; divElem++) {
@@ -187,6 +223,8 @@ async function createNewMeal() {
   if(mealJSON)
     deleteNewMealForm();
 }
+
+// ------------- END Meal Functions -------------
 
 // --------------- Ingredient Functions ---------------
 
