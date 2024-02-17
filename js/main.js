@@ -1,9 +1,8 @@
 const ADD_MEAL_BTN = document.getElementById('meal-button');
-const INGREDIENT_INPUT = 'ingredientInput-';
 
 // --------------- Meal Functions ---------------
 
-function addIngredientInput(inputIdNum) {
+function addIngredientInput() {
   const FOR_INGREDIENT_NAME = 'ingredientName';
   const FOR_INGREDIENT_NUMBER = 'ingredientNumber';
   const FOR_INGREDIENT_MEASUREMENT = 'ingredientMeasurement';
@@ -23,6 +22,8 @@ function addIngredientInput(inputIdNum) {
                                 {for: FOR_INGREDIENT_MEASUREMENT, innerHTML: 'Measurement: '});
   const inputIngredientMeasurement = Object.assign(document.createElement('select'), 
                                 {name: FOR_INGREDIENT_MEASUREMENT, size: '5'});
+  const deleteIngredientButton = Object.assign(document.createElement('button'), 
+                                {innerText: "Delete Ingredient", onclick: (e) => {deleteMealFormItem(e)}});
 
 
   // Add the required attribute to the inputs
@@ -46,19 +47,22 @@ function addIngredientInput(inputIdNum) {
   const nameSpan = document.createElement('span');
   const numSpan = document.createElement('span');
   const measSpan = document.createElement('span');
+  const delBtnSpan = document.createElement('span');
   nameSpan.appendChild(labelIngredientName);
   nameSpan.appendChild(inputIngredientName);
   numSpan.appendChild(labelIngredientNumber);
   numSpan.appendChild(inputIngredientNumber);
   measSpan.appendChild(labelIngredientMeasurement);
   measSpan.appendChild(inputIngredientMeasurement);
+  delBtnSpan.appendChild(deleteIngredientButton);
+
 
   // Add spans to div and return
   const retDiv = document.createElement('div');
-  retDiv.setAttribute('id', INGREDIENT_INPUT + inputIdNum);
   retDiv.appendChild(nameSpan);
   retDiv.appendChild(numSpan);
   retDiv.appendChild(measSpan);
+  retDiv.appendChild(delBtnSpan);
   return retDiv;
 }
 
@@ -66,18 +70,19 @@ function addMoreIngredients(event) {
   event.preventDefault();
 
   let mealInputs = document.getElementById('mealInputs');
-  let ingredientsToAdd = parseInt(document.getElementById('extraIngredientNumber').value);
-  let currIngredients = document.getElementById('ingredientInput').querySelectorAll('div');
-  let lastIngredientIndex = +currIngredients[currIngredients.length - 1].id.split("-")[1];
+  let extraIngredientInput = document.getElementById('extraIngredientNumber');
+  let ingredientsToAdd = parseInt(extraIngredientInput.value) + 1;
+  
+  extraIngredientInput.value = ''; // Remove the value from the form input
 
-  if(ingredientsToAdd === null || ingredientsToAdd === NaN) {
+  if(ingredientsToAdd === null || isNaN(ingredientsToAdd)) {
     console.error("Ingredient amount is not valid");
     return false;
   }
 
   // Create all ingredient inputs
-  for(ingredientIndex = 0; ingredientIndex < ingredientsToAdd; ingredientIndex++) {
-    mealInputs.appendChild(addIngredientInput(ingredientIndex + lastIngredientIndex));
+  for (let ingredientIndex = 0; ingredientIndex < ingredientsToAdd; ingredientIndex++) {
+    mealInputs.appendChild(addIngredientInput());
   }
 }
 
@@ -101,7 +106,7 @@ function createMealForm() {
 
   // Create all ingredient inputs
   for(ingredientIndex = 0; ingredientIndex < 10; ingredientIndex++) {
-    mealsDiv.appendChild(addIngredientInput(ingredientIndex));
+    mealsDiv.appendChild(addIngredientInput());
   }
 
   form.appendChild(mealsDiv);
@@ -125,6 +130,10 @@ function createMealForm() {
 
   // Add the form to the bottom of the body
   document.body.append(form);
+}
+
+function deleteMealFormItem(event) {
+  event.srcElement.parentNode.parentNode.remove();
 }
 
 function deleteNewMealForm() {
@@ -359,6 +368,7 @@ async function fillMealsTable() {
       return response.json();
     })
     .catch((error) => {
+      // TODO: Catch errors when for net::ERR_NAME_NOT_RESOLVED
       console.error("Error: ", error);
       console.log("Server is down! Cannot get meals.")
     });
